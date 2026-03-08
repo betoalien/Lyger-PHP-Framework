@@ -1,0 +1,36 @@
+title: Lyger Framework
+description: A high-performance PHP framework powered by Rust FFI — Always-Alive, Zero-Copy, Zero-Bloat.
+baseurl: ""
+url: ""
+
+theme: just-the-docs
+
+# Navigation
+nav_sort: case_sensitive
+
+# Search
+search_enabled: true
+
+# Footer
+footer_content: "Copyright &copy; 2026 Lyger Framework. Distributed under the MIT License."
+
+# Color scheme
+color_scheme: dark
+
+# Aux links in header
+aux_links:
+  "GitHub":
+    - "https://github.com/lyger-framework/lyger"
+
+aux_links_new_tab: true
+
+# Collections
+collections:
+  docs:
+    permalink: "/:collection/:path/"
+    output: true
+
+just_the_docs:
+  collections:
+    docs:
+      name: Documentation

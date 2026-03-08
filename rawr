@@ -673,6 +673,14 @@ function removeFrontend(string $basePath): array
         echo "  ✓ Removed package.json\n";
     }
 
+    // Remove docs directory (not needed for users)
+    $docsPath = $basePath . '/docs';
+    if (is_dir($docsPath)) {
+        recursiveDelete($docsPath);
+        $removed[] = 'docs/';
+        echo "  ✓ Removed docs directory\n";
+    }
+
     return $removed;
 }
 
