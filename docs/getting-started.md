@@ -22,16 +22,22 @@ Before installing Lyger, make sure your system meets the following requirements:
 
 ## Installation
 
-### 1. Clone the Repository
+### Option A — Composer (recommended)
+
+The fastest way to start a new Lyger project:
+
+```bash
+composer create-project betoalien/lyger my-app
+cd my-app
+```
+
+Composer will download the framework and all dependencies in one step. Skip to [Configure PHP FFI](#3-configure-php-ffi).
+
+### Option B — Git Clone
 
 ```bash
 git clone https://github.com/betoalien/Lyger-PHP-Framework.git my-app
 cd my-app
-```
-
-### 2. Install PHP Dependencies
-
-```bash
 composer install
 ```
 

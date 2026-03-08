@@ -66,6 +66,15 @@ The 313× database advantage comes from bypassing PDO entirely — Rust's `tokio
 
 ### Install
 
+**Via Composer (recommended):**
+
+```bash
+composer create-project betoalien/lyger my-app
+cd my-app
+```
+
+**Via Git:**
+
 ```bash
 git clone https://github.com/betoalien/Lyger-PHP-Framework.git my-app
 cd my-app
