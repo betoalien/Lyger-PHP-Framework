@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyger Framework v0.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        .logo p {
+            font-size: 1.2rem;
+            color: #8892b0;
+            margin-top: 10px;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #ccd6f6;
+            margin-bottom: 60px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tagline span {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #00d9ff;
+            box-shadow: 0 10px 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #00d9ff;
+        }
+
+        .feature-card p {
+            color: #8892b0;
+            line-height: 1.6;
+        }
+
+        .feature-card .icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+
+        .status h2 {
+            color: #00ff88;
+            font-size: 1.5rem;
+        }
+
+        .cli-commands {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .cli-commands h3 {
+            color: #00d9ff;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .cli-commands ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .cli-commands li {
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+        }
+
+        .cli-commands code {
+            color: #00ff88;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>LYGER</h1>
+            <p>PHP Framework with Rust FFI Power</p>
+        </div>
+
+        <div class="tagline">
+            High-Performance PHP Framework &mdash; <span>Built with Rust</span>
+        </div>
+
+        <div class="status">
+            <h2>✓ System Online</h2>
+            <p>Lyger Framework v0.1 is running</p>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="icon">🚀</div>
+                <h3>High Performance</h3>
+                <p>Powered by Rust FFI for maximum speed and memory efficiency. Experience PHP like never before.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🔒</div>
+                <h3>Secure Authentication</h3>
+                <p>Built-in user registration, login, and logout with secure password hashing and session management.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">⚡</div>
+                <h3>Livewire-like Components</h3>
+                <p>Build dynamic interfaces with reactive components. No JavaScript required.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🗄️</div>
+                <h3>Eloquent ORM</h3>
+                <p>Powerful database abstraction with relationships, migrations, and query builder.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🔌</div>
+                <h3>RESTful API</h3>
+                <p>Build robust APIs with automatic routing, middleware, and response handling.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">📊</div>
+                <h3>Debug & Telescope</h3>
+                <p>Powerful debugging tools to inspect requests, queries, and application state.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">📧</div>
+                <h3>Mail System</h3>
+                <p>Send emails easily with a clean API. Supports SMTP and multiple drivers.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🔔</div>
+                <h3>WebSockets</h3>
+                <p>Real-time bidirectional communication for dynamic applications.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">📋</div>
+                <h3>Jobs & Queues</h3>
+                <p>Background processing for heavy tasks. Async execution made simple.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon">🧪</div>
+                <h3>Testing Suite</h3>
+                <p>Built-in testing framework with assertions and test case management.</p>
+            </div>
+        </div>
+
+        <div class="cli-commands">
+            <h3>Available CLI Commands</h3>
+            <ul>
+                <li><code>php rawr serve</code> - Start development server</li>
+                <li><code>php rawr make:controller &lt;Name&gt;</code> - Create controller</li>
+                <li><code>php rawr make:model &lt;Name&gt;</code> - Create model</li>
+                <li><code>php rawr make:migration &lt;Name&gt;</code> - Create migration</li>
+                <li><code>php rawr make:auth</code> - Create authentication</li>
+                <li><code>php rawr make:dash [&lt;Name&gt;]</code> - Create admin dashboard</li>
+                <li><code>php rawr migrate</code> - Run migrations</li>
+                <li><code>php rawr migrate:rollback</code> - Rollback migrations</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p>Lyger Framework v0.1 &copy; 2026</p>
+            <p>Built with ❤️ using Rust FFI</p>
+        </footer>
+    </div>
+</body>
+</html>

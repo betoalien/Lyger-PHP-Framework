@@ -33,6 +33,14 @@ $argument = $argv[2] ?? null;
 $options = array_slice($argv, 2);
 $hasMigration = in_array('--migration', $options);
 
+// Get custom port if specified
+$port = '8000';
+foreach ($options as $opt) {
+    if (str_starts_with($opt, '--port=')) {
+        $port = substr($opt, 7);
+    }
+}
+
 // Block install command if already installed
 if (($command === 'install' || $command === 'init') && $isInstalled) {
     echo "Error: Project already installed. Use 'php rawr serve' to start.\n";
@@ -49,10 +57,10 @@ switch ($command) {
         installProject($basePath);
         break;
     case 'serve':
-        serveAlwaysAlive($basePath, $phpIni);
+        serveLegacy($basePath, $phpIni, $port);
         break;
     case 'serve:php':
-        serveLegacy($basePath, $phpIni);
+        serveLegacy($basePath, $phpIni, $port);
         break;
     case 'make:controller':
         makeController($basePath, $argument);
@@ -126,16 +134,20 @@ function serveAlwaysAlive(string $basePath, string $phpIni): void
     \Lyger\Core\ServerManager::start($router);
 }
 
-function serveLegacy(string $basePath, string $phpIni): void
+function serveLegacy(string $basePath, string $phpIni, string $port = '8000'): void
 {
     $publicPath = $basePath . '/public';
-    $iniFlag = file_exists($phpIni) ? "-c {$phpIni}" : '';
 
-    echo "\n[Lyger] PHP Server running on http://localhost:8000\n";
+    // Build absolute path for php.ini before changing directory
+    $phpIniAbs = realpath($phpIni) ?: $phpIni;
+    $iniFlag = file_exists($phpIni) ? "-c \"{$phpIniAbs}\"" : '';
+
+    echo "\n[Lyger] PHP Server running on http://localhost:{$port}\n";
     echo "   Press Ctrl+C to stop\n\n";
 
-    chdir($publicPath);
-    passthru("php {$iniFlag} -S localhost:8000");
+    // Execute PHP server with absolute paths
+    $cmd = "php {$iniFlag} -S localhost:{$port} -t \"{$publicPath}\"";
+    passthru($cmd);
 }
 
 function findLibrary(string $basePath): ?string
@@ -583,6 +595,9 @@ function installProject(string $basePath): void
     // Architecture cleanup
     if ($architecture === 'A') {
         $removed = array_merge($removed, removeFrontend($basePath));
+    } elseif ($architecture === 'B' && $frontend) {
+        // Configure frontend for selected framework
+        $removed = array_merge($removed, configureFrontend($basePath, $frontend));
     }
 
     // Database cleanup & .env update
@@ -593,7 +608,7 @@ function installProject(string $basePath): void
     $removed = array_merge($removed, cleanupAuth($basePath, $auth));
 
     // Remove install command from CLI (Zero-Bloat)
-    removeInstallCommand($basePath);
+    removeInstallCommand($basePath, $architecture, $frontend, $database, $auth);
 
     // Results
     echo "\n";
@@ -659,6 +674,223 @@ function removeFrontend(string $basePath): array
     }
 
     return $removed;
+}
+
+function configureFrontend(string $basePath, string $framework): array
+{
+    $removed = [];
+    $frontendDir = $basePath . '/frontend';
+
+    // Ensure frontend directory exists
+    if (!is_dir($frontendDir)) {
+        mkdir($frontendDir, 0755, true);
+    }
+
+    $frameworkName = match($framework) {
+        'A' => 'Vue.js',
+        'B' => 'React',
+        'C' => 'Svelte',
+        default => 'None'
+    };
+
+    // Generate framework-specific index.html
+    $htmlContent = getFrontendTemplate($framework, $frameworkName);
+    file_put_contents($frontendDir . '/index.html', $htmlContent);
+
+    echo "  ✓ Frontend configured: {$frameworkName}\n";
+
+    return $removed;
+}
+
+function getFrontendTemplate(string $framework, string $frameworkName): string
+{
+    $templates = [
+        'A' => <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyger + Vue.js</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; color: #fff;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+        .logo { font-size: 3.5rem; font-weight: 800; background: linear-gradient(90deg, #42b883, #35495e);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge { display: inline-block; background: #42b883; color: #fff; padding: 8px 20px; border-radius: 20px;
+            font-size: 0.9rem; margin: 20px 0; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 30px; margin: 20px 0; text-align: left; }
+        .card h3 { color: #42b883; margin-bottom: 15px; }
+        .card p { color: #8892b0; line-height: 1.6; }
+        .btn { background: #42b883; color: #fff; border: none; padding: 12px 30px; border-radius: 6px;
+            font-size: 1rem; cursor: pointer; margin-top: 20px; }
+        .btn:hover { background: #3aa876; }
+        #app { text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="logo">Vue.js</div>
+            <div class="badge">Powered by Lyger Framework</div>
+            <h1>Your Vue.js App</h1>
+            <p style="color:#8892b0;margin:20px 0">{{ message }}</p>
+            <button class="btn" @click="reverseMessage">Reverse Message</button>
+
+            <div class="card">
+                <h3>Getting Started</h3>
+                <p>Your Vue.js frontend is ready. Edit <code>frontend/index.html</code> to start building.</p>
+            </div>
+
+            <div class="card">
+                <h3>Lyger Features</h3>
+                <p>✅ Eloquent ORM | ✅ RESTful API | ✅ Authentication | ✅ Livewire-like Components</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() { return { message: 'Welcome to Lyger + Vue.js!' } },
+            methods: {
+                reverseMessage() { this.message = this.message.split('').reverse().join(''); }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+HTML,
+        'B' => <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyger + React</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; color: #fff;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+        .logo { font-size: 3.5rem; font-weight: 800; background: linear-gradient(90deg, #61dafb, #20232a);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge { display: inline-block; background: #61dafb; color: #000; padding: 8px 20px; border-radius: 20px;
+            font-size: 0.9rem; margin: 20px 0; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 30px; margin: 20px 0; text-align: left; }
+        .card h3 { color: #61dafb; margin-bottom: 15px; }
+        .card p { color: #8892b0; line-height: 1.6; }
+        .btn { background: #61dafb; color: #000; border: none; padding: 12px 30px; border-radius: 6px;
+            font-size: 1rem; cursor: pointer; margin-top: 20px; }
+        .btn:hover { background: #4fa8d1; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function App() {
+            const [count, setCount] = React.useState(0);
+            return (
+                <div className="container">
+                    <div className="logo">React</div>
+                    <div className="badge">Powered by Lyger Framework</div>
+                    <h1>Your React App</h1>
+                    <p style={{color:'#8892b0',margin:'20px 0'}}>Count: {count}</p>
+                    <button className="btn" onClick={() => setCount(count + 1)}>Increment</button>
+
+                    <div className="card">
+                        <h3>Getting Started</h3>
+                        <p>Your React frontend is ready. Edit <code>frontend/index.html</code> to start building.</p>
+                    </div>
+
+                    <div className="card">
+                        <h3>Lyger Features</h3>
+                        <p>✅ Eloquent ORM | ✅ RESTful API | ✅ Authentication | ✅ Livewire-like Components</p>
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
+HTML,
+        'C' => <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyger + Svelte</title>
+    <script src="https://unpkg.com/svelte@4/store.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; color: #fff;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+        .logo { font-size: 3.5rem; font-weight: 800; background: linear-gradient(90deg, #ff3e00, #fca311);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .badge { display: inline-block; background: #ff3e00; color: #fff; padding: 8px 20px; border-radius: 20px;
+            font-size: 0.9rem; margin: 20px 0; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 30px; margin: 20px 0; text-align: left; }
+        .card h3 { color: #ff3e00; margin-bottom: 15px; }
+        .card p { color: #8892b0; line-height: 1.6; }
+        .btn { background: #ff3e00; color: #fff; border: none; padding: 12px 30px; border-radius: 6px;
+            font-size: 1rem; cursor: pointer; margin-top: 20px; }
+        .btn:hover { background: #e03600; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script type="module">
+        const app = document.getElementById('app');
+        let count = 0;
+        function render() {
+            app.innerHTML = `
+                <div class="container">
+                    <div class="logo">Svelte</div>
+                    <div class="badge">Powered by Lyger Framework</div>
+                    <h1>Your Svelte App</h1>
+                    <p style="color:#8892b0;margin:20px 0">Count: ${count}</p>
+                    <button class="btn" onclick="count++; render()">Increment</button>
+
+                    <div class="card">
+                        <h3>Getting Started</h3>
+                        <p>Your Svelte frontend is ready. Edit <code>frontend/index.html</code> to start building.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Lyger Features</h3>
+                        <p>✅ Eloquent ORM | ✅ RESTful API | ✅ Authentication | ✅ Livewire-like Components</p>
+                    </div>
+                </div>
+            `;
+        }
+        render();
+    </script>
+</body>
+</html>
+HTML
+    ];
+
+    return $templates[$framework] ?? $templates['A'];
 }
 
 function cleanupDatabase(string $basePath, string $selected): array
@@ -737,13 +969,35 @@ function recursiveDelete(string $path): void
 // Zero-Bloat: Remove install command after setup
 // ============================================================
 
-function removeInstallCommand(string $basePath): void
+function removeInstallCommand(string $basePath, string $architecture = 'B', string $frontend = 'A', string $database = 'A', string $auth = 'C'): void
 {
     $markerFile = $basePath . '/.lyger_installed';
     file_put_contents($markerFile, json_encode([
-        'installed_at' => date('Y-m-d H:i:s')
+        'installed_at' => date('Y-m-d H:i:s'),
+        'architecture' => $architecture,
+        'frontend' => $frontend,
+        'database' => $database,
+        'auth' => $auth
     ]));
     echo "  ✓ Install command disabled (Zero-Bloat)\n";
+}
+
+function getProjectConfig(string $basePath): array
+{
+    $markerFile = $basePath . '/.lyger_installed';
+    if (file_exists($markerFile)) {
+        $content = file_get_contents($markerFile);
+        $config = json_decode($content, true);
+        if ($config) {
+            return $config;
+        }
+    }
+    return [
+        'architecture' => 'B',
+        'frontend' => 'A',
+        'database' => 'A',
+        'auth' => 'C'
+    ];
 }
 
 function isProjectInstalled(string $basePath): bool
