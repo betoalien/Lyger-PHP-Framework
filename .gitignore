@@ -1,0 +1,46 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Editor directories and files
+*.swp
+*.bak
+*.backup
+*.orig
+*~
+.vscode/
+.idea/
+*.iml
+
+# Vendor
+/vendor/
+/vendor/autoload.php
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Node modules (if using frontend)
+/node_modules/
+/frontend/node_modules/
+
+# Build outputs
+/target/
+/dist/
+/build/

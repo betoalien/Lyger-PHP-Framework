@@ -4,7 +4,7 @@
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/betoalien/Lyger-PHP-Framework.git
 cd lyger-framework
 
 # Install PHP dependencies
