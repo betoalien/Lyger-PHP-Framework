@@ -10,7 +10,7 @@ permalink: /
 
 A high-performance PHP 8.0+ framework powered by Rust FFI. Always-Alive. Zero-Copy. Zero-Bloat.
 
-**[Get Started →](getting-started)** &nbsp;&nbsp; [View on GitHub](https://github.com/lyger-framework/lyger)
+**[Get Started →](getting-started.html)** &nbsp;&nbsp; [View on GitHub](https://github.com/betoalien/Lyger-PHP-Framework)
 
 ---
 
@@ -42,7 +42,7 @@ The result is PHP with the speed of a compiled language.
 | Heavy Computation (10M iterations) | **112 ms** | 360 ms | 357 ms |
 | Memory per request | ~16 MB | ~32 MB | ~28 MB |
 
-> Full benchmark methodology and results: [Performance](performance)
+> Full benchmark methodology and results: [Performance](performance.html)
 
 ---
 
@@ -58,14 +58,14 @@ The result is PHP with the speed of a compiled language.
 ## Quick Install
 
 ```bash
-git clone https://github.com/lyger-framework/lyger.git my-project
+git clone https://github.com/betoalien/Lyger-PHP-Framework.git my-project
 cd my-project
 composer install
 php rawr install   # Interactive zero-bloat setup
 php rawr serve     # Start the Always-Alive server
 ```
 
-> See the full [Getting Started](getting-started) guide for step-by-step instructions.
+> See the full [Getting Started](getting-started.html) guide for step-by-step instructions.
 
 ---
 
@@ -73,23 +73,23 @@ php rawr serve     # Start the Always-Alive server
 
 | Section | Description |
 |---------|-------------|
-| [Getting Started](getting-started) | Installation, project setup, first routes |
-| [Architecture](architecture) | Always-Alive + Zero-Copy deep dive |
-| [Routing](routing) | Route definitions, parameters, groups |
-| [Requests](requests) | Capturing and reading HTTP input |
-| [Responses](responses) | Sending JSON, HTML, and custom responses |
-| [ORM](orm) | Models, relationships, collections |
-| [Query Builder](query-builder) | Fluent SQL query builder |
-| [Schema & Migrations](schema) | Table creation and migration system |
-| [Validation](validation) | Request validation with 20+ rules |
-| [Cache](cache) | In-memory caching with TTL |
-| [Events](events) | Event dispatching and broadcasting |
-| [Jobs & Queues](jobs) | Async job queue with persistence |
-| [API Resources](api) | JSON API responses and resources |
-| [Middleware](middleware) | Request/response pipeline |
-| [Container](container) | Dependency injection |
-| [Helpers](helpers) | Env, Path, Str, Arr, Config, Platform |
-| [Testing](testing) | Test case classes and assertions |
-| [CLI Reference](cli) | All `rawr` commands |
-| [Rust FFI](rust-ffi) | The Rust backend and FFI API |
-| [Performance](performance) | Benchmarks and analysis |
+| [Getting Started](getting-started.html) | Installation, project setup, first routes |
+| [Architecture](architecture.html) | Always-Alive + Zero-Copy deep dive |
+| [Routing](routing.html) | Route definitions, parameters, groups |
+| [Requests](requests.html) | Capturing and reading HTTP input |
+| [Responses](responses.html) | Sending JSON, HTML, and custom responses |
+| [ORM](orm.html) | Models, relationships, collections |
+| [Query Builder](query-builder.html) | Fluent SQL query builder |
+| [Schema & Migrations](schema.html) | Table creation and migration system |
+| [Validation](validation.html) | Request validation with 20+ rules |
+| [Cache](cache.html) | In-memory caching with TTL |
+| [Events](events.html) | Event dispatching and broadcasting |
+| [Jobs & Queues](jobs.html) | Async job queue with persistence |
+| [API Resources](api.html) | JSON API responses and resources |
+| [Middleware](middleware.html) | Request/response pipeline |
+| [Container](container.html) | Dependency injection |
+| [Helpers](helpers.html) | Env, Path, Str, Arr, Config, Platform |
+| [Testing](testing.html) | Test case classes and assertions |
+| [CLI Reference](cli.html) | All `rawr` commands |
+| [Rust FFI](rust-ffi.html) | The Rust backend and FFI API |
+| [Performance](performance.html) | Benchmarks and analysis |

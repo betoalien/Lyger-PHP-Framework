@@ -317,4 +317,4 @@ Lyger's speed advantages stack:
 5. **Async DB drivers** → `tokio-postgres`, `mysql_async` bypass PDO thread blocking
 6. **SIMD computation** → Rust compiler vectorizes math-heavy loops
 
-> See [Performance](performance) for full benchmark results.
+> See [Performance](performance.html) for full benchmark results.

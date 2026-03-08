@@ -1,9 +1,12 @@
 title: Lyger Framework
 description: A high-performance PHP framework powered by Rust FFI — Always-Alive, Zero-Copy, Zero-Bloat.
-baseurl: ""
-url: ""
+baseurl: "/Lyger-PHP-Framework"
+url: "https://betoalien.github.io"
 
-theme: just-the-docs
+remote_theme: just-the-docs/just-the-docs
+
+plugins:
+  - jekyll-remote-theme
 
 # Navigation
 nav_sort: case_sensitive
@@ -20,17 +23,6 @@ color_scheme: dark
 # Aux links in header
 aux_links:
   "GitHub":
-    - "https://github.com/lyger-framework/lyger"
+    - "https://github.com/betoalien/Lyger-PHP-Framework"
 
 aux_links_new_tab: true
-
-# Collections
-collections:
-  docs:
-    permalink: "/:collection/:path/"
-    output: true
-
-just_the_docs:
-  collections:
-    docs:
-      name: Documentation

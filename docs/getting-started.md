@@ -25,7 +25,7 @@ Before installing Lyger, make sure your system meets the following requirements:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/lyger-framework/lyger.git my-app
+git clone https://github.com/betoalien/Lyger-PHP-Framework.git my-app
 cd my-app
 ```
 
@@ -71,7 +71,7 @@ After completing the installer:
 - `.env` is automatically configured for your selected database
 - A `.lyger_installed` marker file is created
 
-> See [Zero-Bloat Architecture](architecture#zero-bloat-installer) for details on what gets removed.
+> See [Zero-Bloat Architecture](architecture.html#zero-bloat-installer) for details on what gets removed.
 
 ---
 
@@ -291,7 +291,7 @@ $port  = Env::get('APP_PORT', 8000);
 
 ## Next Steps
 
-- Learn about [Routing](routing) — parameters, groups, middleware
-- Explore the [ORM](orm) — relationships, scopes, collections
-- Understand the [Architecture](architecture) — how Always-Alive and Zero-Copy work
-- Read the [CLI Reference](cli) for all available `rawr` commands
+- Learn about [Routing](routing.html) — parameters, groups, middleware
+- Explore the [ORM](orm.html) — relationships, scopes, collections
+- Understand the [Architecture](architecture.html) — how Always-Alive and Zero-Copy work
+- Read the [CLI Reference](cli.html) for all available `rawr` commands

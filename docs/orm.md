@@ -270,7 +270,7 @@ $array = $posts->toArray();
 $json  = $posts->toJson();
 ```
 
-See the [Query Builder](query-builder) doc for filtering before fetching from the database.
+See the [Query Builder](query-builder.html) doc for filtering before fetching from the database.
 
 ---
 

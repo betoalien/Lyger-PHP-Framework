@@ -592,6 +592,9 @@ function installProject(string $basePath): void
 
     $removed = [];
 
+    // Always remove docs directory (not needed for users)
+    $removed = array_merge($removed, removeDocs($basePath));
+
     // Architecture cleanup
     if ($architecture === 'A') {
         $removed = array_merge($removed, removeFrontend($basePath));
@@ -646,6 +649,20 @@ function askOption(string $question, array $options, string $default): string
     }
 
     return strtoupper($input);
+}
+
+function removeDocs(string $basePath): array
+{
+    $removed = [];
+
+    $docsPath = $basePath . '/docs';
+    if (is_dir($docsPath)) {
+        recursiveDelete($docsPath);
+        $removed[] = 'docs/';
+        echo "  ✓ Removed docs directory\n";
+    }
+
+    return $removed;
 }
 
 function removeFrontend(string $basePath): array
