@@ -1,9 +1,19 @@
 {
-    "name": "lyger/framework",
+    "name": "betoalien/lyger",
     "description": "Lyger Framework v0.1 - PHP on steroids with Rust FFI",
+    "keywords": ["framework", "lyger", "rust", "ffi", "performance", "zero-copy", "async"],
     "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alberto Cardenas",
+            "email": "betoalien@gmail.com",
+            "role": "Creator & Architect"
+        }
+    ],
     "require": {
-        "php": "^8.0"
+        "php": "^8.2",
+        "ext-ffi": "*"
     },
     "autoload": {
         "psr-4": {
@@ -11,7 +21,18 @@
             "App\\": "App/"
         }
     },
+    "scripts": {
+        "post-create-project-cmd": [
+            "@php rawr install"
+        ],
+        "post-install-cmd": [
+            "@php rawr core:download-binaries"
+        ]
+    },
     "config": {
-        "optimize-autoloader": true
-    }
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
