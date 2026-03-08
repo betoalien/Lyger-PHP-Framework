@@ -1,0 +1,17 @@
+{
+    "name": "lyger/framework",
+    "description": "Lyger Framework v0.1 - PHP on steroids with Rust FFI",
+    "type": "project",
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lyger\\": "Lyger/",
+            "App\\": "App/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

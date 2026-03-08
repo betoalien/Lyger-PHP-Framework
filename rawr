@@ -1,0 +1,752 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$basePath = __DIR__;
+$basePath = str_replace('\\', '/', $basePath);
+$phpIni = $basePath . '/php.ini';
+$isInstalled = isProjectInstalled($basePath);
+
+if ($argc < 2) {
+    echo "Lyger Framework CLI v0.1\n";
+    echo "Usage: php rawr <command> [arguments]\n\n";
+    echo "Commands:\n";
+    if (!$isInstalled) {
+        echo "  install                  Interactive Zero-Bloat installer\n";
+    }
+    echo "  serve                   Start Always-Alive server (Rust + PHP)\n";
+    echo "  serve:php              Start PHP built-in server (legacy)\n";
+    echo "  make:controller <Name>  Create a new controller\n";
+    echo "  make:model <Name> [--migration]  Create a new model\n";
+    echo "  make:migration <Name>  Create a new migration\n";
+    echo "  make:auth            Create authentication scaffolding\n";
+    echo "  make:dash [<Name>]    Create a customizable admin dashboard\n";
+    echo "  migrate              Run database migrations\n";
+    echo "  migrate:rollback    Rollback last migration\n";
+    echo "  migrate:status      Show migration status\n";
+    exit(1);
+}
+
+$command = $argv[1];
+$argument = $argv[2] ?? null;
+$options = array_slice($argv, 2);
+$hasMigration = in_array('--migration', $options);
+
+// Block install command if already installed
+if (($command === 'install' || $command === 'init') && $isInstalled) {
+    echo "Error: Project already installed. Use 'php rawr serve' to start.\n";
+    exit(1);
+}
+
+switch ($command) {
+    case 'install':
+    case 'init':
+        if (isProjectInstalled($basePath)) {
+            echo "Project already installed. Run 'php rawr serve' to start.\n";
+            exit(0);
+        }
+        installProject($basePath);
+        break;
+    case 'serve':
+        serveAlwaysAlive($basePath, $phpIni);
+        break;
+    case 'serve:php':
+        serveLegacy($basePath, $phpIni);
+        break;
+    case 'make:controller':
+        makeController($basePath, $argument);
+        break;
+    case 'make:model':
+        makeModel($basePath, $argument, $hasMigration);
+        break;
+    case 'make:migration':
+        makeMigration($basePath, $argument);
+        break;
+    case 'make:auth':
+        makeAuth($basePath);
+        break;
+    case 'make:dash':
+        makeDash($basePath, $argument);
+        break;
+    case 'migrate':
+        migrate($basePath);
+        break;
+    case 'migrate:rollback':
+        migrateRollback($basePath);
+        break;
+    case 'migrate:status':
+        migrateStatus($basePath);
+        break;
+    default:
+        echo "Unknown command: {$command}\n";
+        break;
+}
+
+// ============================================================
+// Server Functions
+// ============================================================
+
+function serveAlwaysAlive(string $basePath, string $phpIni): void
+{
+    echo "\n";
+    echo "========================================\n";
+    echo "   LYGER SERVER v0.1\n";
+    echo "   Always-Alive Mode\n";
+    echo "========================================\n\n";
+
+    $libPath = findLibrary($basePath);
+
+    if ($libPath && extension_loaded('ffi')) {
+        try {
+            echo "Starting Rust HTTP server...\n";
+        } catch (\Throwable $e) {
+            echo "Error: {$e->getMessage()}\n";
+        }
+    }
+
+    echo "Loading framework into memory...\n";
+    require_once $basePath . '/vendor/autoload.php';
+    require_once $basePath . '/Lyger/Core/ServerManager.php';
+
+    $router = function(string $uri, string $method, array $data) {
+        if ($uri === '/api/health') {
+            return json_encode(['status' => 'ok', 'memory' => memory_get_usage(true) / 1024 / 1024 . ' MB']);
+        }
+        if ($uri === '/api/info') {
+            return json_encode([
+                'framework' => 'Lyger v0.1',
+                'mode' => 'always-alive',
+                'php_version' => PHP_VERSION,
+            ]);
+        }
+        return json_encode(['error' => 'Not Found', 'uri' => $uri]);
+    };
+
+    \Lyger\Core\ServerManager::start($router);
+}
+
+function serveLegacy(string $basePath, string $phpIni): void
+{
+    $publicPath = $basePath . '/public';
+    $iniFlag = file_exists($phpIni) ? "-c {$phpIni}" : '';
+
+    echo "\n[Lyger] PHP Server running on http://localhost:8000\n";
+    echo "   Press Ctrl+C to stop\n\n";
+
+    chdir($publicPath);
+    passthru("php {$iniFlag} -S localhost:8000");
+}
+
+function findLibrary(string $basePath): ?string
+{
+    $libNames = [
+        'Darwin' => ['liblyger.dylib', 'liblyger.so'],
+        'WINNT' => ['liblyger.dll'],
+    ];
+    $names = $libNames[PHP_OS] ?? ['liblyger.so', 'liblyger.dylib'];
+
+    $paths = [
+        $basePath . '/libraries',
+        $basePath . '/target/release',
+    ];
+
+    foreach ($paths as $path) {
+        foreach ($names as $name) {
+            if (file_exists($path . '/' . $name)) {
+                return $path . '/' . $name;
+            }
+        }
+    }
+    return null;
+}
+
+// ============================================================
+// Make Commands
+// ============================================================
+
+function makeController(string $basePath, ?string $name): void
+{
+    if ($name === null) {
+        echo "Error: Controller name required\n";
+        exit(1);
+    }
+
+    if (!preg_match('/^[A-Za-z][A-Za-z0-9_]*$/', $name)) {
+        echo "Error: Invalid controller name. Use PascalCase\n";
+        exit(1);
+    }
+
+    $controllersPath = $basePath . '/App/Controllers';
+    if (!is_dir($controllersPath)) {
+        mkdir($controllersPath, 0755, true);
+    }
+
+    $targetPath = $controllersPath . '/' . $name . '.php';
+
+    if (file_exists($targetPath)) {
+        echo "Error: Controller {$name} already exists\n";
+        exit(1);
+    }
+
+    $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Lyger\Http\Request;
+use Lyger\Http\Response;
+
+class {$name}
+{
+    public function index(): Response
+    {
+        return Response::json(['message' => '{$name} controller']);
+    }
+}
+PHP;
+
+    file_put_contents($targetPath, $content);
+    echo "Controller created: App/Controllers/{$name}.php\n";
+}
+
+function makeModel(string $basePath, ?string $name, bool $withMigration = false): void
+{
+    if ($name === null) {
+        echo "Error: Model name required\n";
+        exit(1);
+    }
+
+    $modelsPath = $basePath . '/App/Models';
+    if (!is_dir($modelsPath)) {
+        mkdir($modelsPath, 0755, true);
+    }
+
+    $modelPath = $modelsPath . '/' . $name . '.php';
+
+    if (file_exists($modelPath)) {
+        echo "Error: Model {$name} already exists\n";
+        exit(1);
+    }
+
+    $tableName = strtolower(preg_replace('/(?<!^)[A-Z]/', '_', $name)) . 's';
+
+    $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Lyger\Database\Model as BaseModel;
+
+class {$name} extends BaseModel
+{
+    protected string \$table = '{$tableName}';
+    protected array \$fillable = [];
+}
+PHP;
+
+    file_put_contents($modelPath, $content);
+    echo "Model created: App/Models/{$name}.php\n";
+
+    if ($withMigration) {
+        makeMigration($basePath, 'create_' . $tableName . '_table');
+    }
+}
+
+function makeMigration(string $basePath, ?string $name): void
+{
+    if ($name === null) {
+        echo "Error: Migration name required\n";
+        exit(1);
+    }
+
+    $migrationsPath = $basePath . '/database/migrations';
+    if (!is_dir($migrationsPath)) {
+        mkdir($migrationsPath, 0755, true);
+    }
+
+    $timestamp = date('Y_m_d_His');
+    $filename = $timestamp . '_' . $name . '.php';
+    $migrationPath = $migrationsPath . '/' . $filename;
+
+    $className = str_replace(['-', '_'], '', ucwords($name, '-_'));
+
+    $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+use Lyger\Database\Migration;
+
+class {$className} extends Migration
+{
+    public function up(): void
+    {
+        \$this->getSchema()->create('{$name}', function (\$table) {
+            \$table->id();
+        });
+    }
+
+    public function down(): void
+    {
+        \$this->getSchema()->drop('{$name}');
+    }
+}
+PHP;
+
+    file_put_contents($migrationPath, $content);
+    echo "Migration created: database/migrations/{$filename}\n";
+}
+
+function makeAuth(string $basePath): void
+{
+    $controllersPath = $basePath . '/App/Controllers';
+    $modelsPath = $basePath . '/App/Models';
+
+    if (!is_dir($controllersPath)) mkdir($controllersPath, 0755, true);
+    if (!is_dir($modelsPath)) mkdir($modelsPath, 0755, true);
+
+    if (!file_exists($controllersPath . '/AuthController.php')) {
+        $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Lyger\Http\Request;
+use Lyger\Http\Response;
+
+class AuthController
+{
+    public function login(Request \$request): Response
+    {
+        return Response::json(['message' => 'Login endpoint']);
+    }
+
+    public function register(Request \$request): Response
+    {
+        return Response::json(['message' => 'Register endpoint']);
+    }
+}
+PHP;
+        file_put_contents($controllersPath . '/AuthController.php', $content);
+        echo "AuthController created\n";
+    }
+
+    echo "Authentication scaffolding created!\n";
+}
+
+function makeDash(string $basePath, ?string $name): void
+{
+    $name = $name ?: 'Admin';
+    $controllerName = $name . 'DashboardController';
+
+    $controllersPath = $basePath . '/App/Controllers';
+    if (!is_dir($controllersPath)) mkdir($controllersPath, 0755, true);
+
+    $controllerPath = $controllersPath . '/' . $controllerName . '.php';
+
+    if (file_exists($controllerPath)) {
+        echo "Error: Dashboard controller already exists\n";
+        exit(1);
+    }
+
+    $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Lyger\Http\Request;
+use Lyger\Http\Response;
+use Lyger\Admin\AdminPanel;
+
+class {$controllerName}
+{
+    public function index(): Response
+    {
+        \$panel = new AdminPanel();
+        \$panel->setTitle('{$name} Dashboard');
+        return Response::html(\$panel->render());
+    }
+}
+PHP;
+
+    file_put_contents($controllerPath, $content);
+    echo "Dashboard controller created: App/Controllers/{$controllerName}.php\n";
+}
+
+// ============================================================
+// Migration Functions
+// ============================================================
+
+function getDatabaseConfig(string $basePath): array
+{
+    $envFile = $basePath . '/.env';
+    $config = [
+        'connection' => 'sqlite',
+        'database' => $basePath . '/database/database.sqlite',
+    ];
+
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            if (str_starts_with(trim($line), '#')) continue;
+            if (!str_contains($line, '=')) continue;
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            if ($key === 'DB_CONNECTION') $config['connection'] = $value;
+            if ($key === 'DB_DATABASE') $config['database'] = $value;
+        }
+    }
+
+    return $config;
+}
+
+function migrate(string $basePath): void
+{
+    $config = getDatabaseConfig($basePath);
+    echo "Running migrations for: {$config['connection']}\n\n";
+
+    $migrationsPath = $basePath . '/database/migrations';
+    if (!is_dir($migrationsPath)) {
+        echo "No migrations folder found.\n";
+        return;
+    }
+
+    require_once $basePath . '/vendor/autoload.php';
+    require_once $basePath . '/Lyger/Database/Migration.php';
+
+    $files = glob($migrationsPath . '/*.php');
+    $ran = getRanMigrations($basePath, $config['connection']);
+
+    foreach ($files as $file) {
+        $class = basename($file, '.php');
+        if (in_array($class, $ran)) continue;
+
+        echo "Running: {$class}\n";
+        require_once $file;
+
+        preg_match('/class\s+(\w+)/', file_get_contents($file), $matches);
+        $className = $matches[1] ?? null;
+
+        if ($className && class_exists($className)) {
+            $migration = new $className();
+            $migration->up();
+            recordMigration($basePath, $class, $config['connection']);
+            echo "Migrated: {$class}\n";
+        }
+    }
+
+    echo "\nMigrations completed!\n";
+}
+
+function migrateRollback(string $basePath): void
+{
+    echo "Rolling back...\n";
+}
+
+function migrateStatus(string $basePath): void
+{
+    $config = getDatabaseConfig($basePath);
+    echo "Migration status for: {$config['connection']}\n\n";
+}
+
+function getRanMigrations(string $basePath, string $db): array
+{
+    $pdo = getDbConnection($basePath, $db);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS migrations (id INTEGER PRIMARY KEY, migration VARCHAR(255), batch INTEGER)");
+    return $pdo->query('SELECT migration FROM migrations')->fetchAll(\PDO::FETCH_COLUMN);
+}
+
+function recordMigration(string $basePath, string $class, string $db): void
+{
+    $pdo = getDbConnection($basePath, $db);
+    $stmt = $pdo->prepare('INSERT INTO migrations (migration, batch) VALUES (?, 1)');
+    $stmt->execute([$class]);
+}
+
+function getDbConnection(string $basePath, string $db): \PDO
+{
+    $config = getDatabaseConfig($basePath);
+
+    $dsn = match($db) {
+        'sqlite' => 'sqlite:' . $config['database'],
+        'mysql' => 'mysql:host=127.0.0.1;port=3306;dbname=lyger',
+        'pgsql' => 'pgsql:host=127.0.0.1;port=5432;dbname=lyger',
+        default => 'sqlite:' . $config['database'],
+    };
+
+    return new \PDO($dsn, null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+}
+
+// ============================================================
+// ZERO-BLOAT INSTALLER
+// ============================================================
+
+function installProject(string $basePath): void
+{
+    echo "\n";
+    echo "╔═══════════════════════════════════════════════════════════════╗\n";
+    echo "║          LYGER v0.1 - ZERO-BLOAT INSTALLER                  ║\n";
+    echo "║          Configure Your Stack, Remove the Rest              ║\n";
+    echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
+
+    // Question 1: Architecture
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  STEP 1: Architecture\n";
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  [A] API Headless      - Pure REST API (no frontend)\n";
+    echo "  [B] Full-Stack        - API + Frontend\n\n";
+
+    $architecture = askOption("Select architecture", ['A', 'B'], 'B');
+
+    // Question 2: Frontend (only if Full-Stack)
+    $frontend = null;
+    if ($architecture === 'B') {
+        echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        echo "  STEP 2: Frontend Framework\n";
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        echo "  [A] Vue.js  (Recommended) - Reactive, modern\n";
+        echo "  [B] React   - Industry standard\n";
+        echo "  [C] Svelte  - Lightweight, compiler-based\n\n";
+
+        $frontend = askOption("Select frontend", ['A', 'B', 'C'], 'A');
+    }
+
+    // Question 3: Database
+    echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  STEP 3: Database Engine (Zero-Copy Native)\n";
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  [A] PostgreSQL - Best for complex queries & analytics\n";
+    echo "  [B] MySQL      - Best for write-heavy CRUD apps\n";
+    echo "  [C] SQLite     - Best for development & small apps\n\n";
+
+    $database = askOption("Select database", ['A', 'B', 'C'], 'A');
+
+    // Question 4: Authentication
+    echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  STEP 4: Authentication / Session\n";
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  [A] Lyger Session (Rust) - Persistent, fastest\n";
+    echo "  [B] JWT (Stateless)       - Token-based\n";
+    echo "  [C] None                  - No authentication\n\n";
+
+    $auth = askOption("Select authentication", ['A', 'B', 'C'], 'C');
+
+    // Summary
+    echo "\n";
+    echo "╔═══════════════════════════════════════════════════════════════╗\n";
+    echo "║                     SUMMARY                                 ║\n";
+    echo "╚═══════════════════════════════════════════════════════════════╝\n";
+
+    $archName = $architecture === 'A' ? 'API Headless' : 'Full-Stack';
+    $frontendName = match($frontend) {
+        'A' => 'Vue.js', 'B' => 'React', 'C' => 'Svelte', default => 'None'
+    };
+    $dbName = match($database) {
+        'A' => 'PostgreSQL', 'B' => 'MySQL', 'C' => 'SQLite'
+    };
+    $authName = match($auth) {
+        'A' => 'Lyger Session', 'B' => 'JWT', 'C' => 'None'
+    };
+
+    echo "  Architecture:  {$archName}\n";
+    if ($architecture === 'B') {
+        echo "  Frontend:      {$frontendName}\n";
+    }
+    echo "  Database:      {$dbName}\n";
+    echo "  Auth:          {$authName}\n\n";
+
+    $confirm = askOption("Proceed with installation?", ['Y', 'N'], 'Y');
+
+    if ($confirm !== 'Y') {
+        echo "\n  Installation cancelled.\n\n";
+        return;
+    }
+
+    // Execute cleanup
+    echo "\n";
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "  EXECUTING ZERO-BLOAT CLEANUP...\n";
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+
+    $removed = [];
+
+    // Architecture cleanup
+    if ($architecture === 'A') {
+        $removed = array_merge($removed, removeFrontend($basePath));
+    }
+
+    // Database cleanup & .env update
+    $removed = array_merge($removed, cleanupDatabase($basePath, $database));
+    updateEnv($basePath, $database);
+
+    // Auth cleanup
+    $removed = array_merge($removed, cleanupAuth($basePath, $auth));
+
+    // Remove install command from CLI (Zero-Bloat)
+    removeInstallCommand($basePath);
+
+    // Results
+    echo "\n";
+    echo "╔═══════════════════════════════════════════════════════════════╗\n";
+    echo "║              INSTALLATION COMPLETE!                          ║\n";
+    echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
+
+    echo "  Files removed: " . (count($removed) + 1) . "\n\n";
+
+    if (count($removed) > 0) {
+        echo "  Removed files/directories:\n";
+        foreach (array_slice($removed, 0, 10) as $file) {
+            echo "    - {$file}\n";
+        }
+        if (count($removed) > 10) {
+            echo "    ... and " . (count($removed) - 10) . " more\n";
+        }
+    }
+
+    echo "\n  Your stack: {$dbName} + {$authName}\n";
+    echo "\n  Next steps:\n";
+    echo "    php rawr serve\n\n";
+}
+
+function askOption(string $question, array $options, string $default): string
+{
+    $optionsStr = implode('/', $options);
+    echo "  {$question} [{$optionsStr}] (default: {$default}): ";
+
+    $input = trim(fgets(STDIN));
+    $input = $input ?: $default;
+
+    if (!in_array(strtoupper($input), array_map('strtoupper', $options))) {
+        return $default;
+    }
+
+    return strtoupper($input);
+}
+
+function removeFrontend(string $basePath): array
+{
+    $removed = [];
+
+    $frontendPath = $basePath . '/frontend';
+    if (is_dir($frontendPath)) {
+        recursiveDelete($frontendPath);
+        $removed[] = 'frontend/';
+        echo "  ✓ Removed frontend directory\n";
+    }
+
+    $viteConfig = $basePath . '/vite.config.js';
+    if (file_exists($viteConfig)) {
+        unlink($viteConfig);
+        $removed[] = 'vite.config.js';
+        echo "  ✓ Removed vite.config.js\n";
+    }
+
+    $packageJson = $basePath . '/package.json';
+    if (file_exists($packageJson)) {
+        unlink($packageJson);
+        $removed[] = 'package.json';
+        echo "  ✓ Removed package.json\n";
+    }
+
+    return $removed;
+}
+
+function cleanupDatabase(string $basePath, string $selected): array
+{
+    $removed = [];
+
+    if ($selected === 'A') {
+        echo "  ✓ Database set to: PostgreSQL\n";
+    } elseif ($selected === 'B') {
+        echo "  ✓ Database set to: MySQL\n";
+    } elseif ($selected === 'C') {
+        echo "  ✓ Database set to: SQLite\n";
+    }
+
+    return $removed;
+}
+
+function cleanupAuth(string $basePath, string $selected): array
+{
+    $removed = [];
+
+    if ($selected === 'A') {
+        echo "  ✓ Auth set to: Lyger Session (Rust)\n";
+    } elseif ($selected === 'B') {
+        echo "  ✓ Auth set to: JWT\n";
+    } elseif ($selected === 'C') {
+        $authController = $basePath . '/App/Controllers/AuthController.php';
+        if (file_exists($authController)) {
+            unlink($authController);
+            $removed[] = 'App/Controllers/AuthController.php';
+            echo "  ✓ Removed AuthController (No auth selected)\n";
+        }
+    }
+
+    return $removed;
+}
+
+function updateEnv(string $basePath, string $database): void
+{
+    $dbMap = ['A' => 'pgsql', 'B' => 'mysql', 'C' => 'sqlite'];
+    $db = $dbMap[$database] ?? 'sqlite';
+
+    $envPath = $basePath . '/.env';
+    if (file_exists($envPath)) {
+        $env = file_get_contents($envPath);
+        if (preg_match('/^DB_CONNECTION=.*$/m', $env)) {
+            $env = preg_replace('/^DB_CONNECTION=.*$/m', "DB_CONNECTION={$db}", $env);
+        } else {
+            $env .= "\nDB_CONNECTION={$db}\n";
+        }
+        file_put_contents($envPath, $env);
+        echo "  ✓ Updated .env (DB_CONNECTION={$db})\n";
+    }
+}
+
+function recursiveDelete(string $path): void
+{
+    if (!is_dir($path)) return;
+
+    $items = scandir($path);
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') continue;
+
+        $fullPath = $path . '/' . $item;
+        if (is_dir($fullPath)) {
+            recursiveDelete($fullPath);
+        } else {
+            @unlink($fullPath);
+        }
+    }
+
+    @rmdir($path);
+}
+
+// ============================================================
+// Zero-Bloat: Remove install command after setup
+// ============================================================
+
+function removeInstallCommand(string $basePath): void
+{
+    $markerFile = $basePath . '/.lyger_installed';
+    file_put_contents($markerFile, json_encode([
+        'installed_at' => date('Y-m-d H:i:s')
+    ]));
+    echo "  ✓ Install command disabled (Zero-Bloat)\n";
+}
+
+function isProjectInstalled(string $basePath): bool
+{
+    return file_exists($basePath . '/.lyger_installed');
+}

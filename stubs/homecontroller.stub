@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Lyger\Http\Request;
+use Lyger\Http\Response;
+
+class HomeController
+{
+    public function index(): Response
+    {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">My App</h1>
+            <div>
+                <span id="userName" class="mr-4"></span>
+                <button onclick="logout()" class="text-red-500">Logout</button>
+            </div>
+        </div>
+    </nav>
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+        <p class="text-gray-600">Welcome to your application!</p>
+    </div>
+    <script>
+        async function checkAuth() {
+            const token = localStorage.getItem("token");
+            if (!token) { window.location.href = "/login"; return; }
+            const res = await fetch("/api/auth/me", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            const data = await res.json();
+            if (!data.success) { window.location.href = "/login"; return; }
+            document.getElementById("userName").textContent = data.user.name;
+        }
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+        checkAuth();
+    </script>
+</body>
+</html>
+HTML;
+        return Response::html($html);
+    }
+}
