@@ -20,7 +20,7 @@ color_scheme: dark
 # Aux links in header
 aux_links:
   "GitHub":
-    - "https://github.com/lyger-framework/lyger"
+    - "https://github.com/betoalien/Lyger-PHP-Framework/"
 
 aux_links_new_tab: true
 
