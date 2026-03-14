@@ -66,21 +66,6 @@ Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster perfo
 
 ---
 
-### Test 4: Database CRUD (1,000 operations)
-
-| Framework | Insert | Select | Update | Delete | **Total** |
-|-----------|--------|--------|--------|--------|-----------|
-| **Lyger v0.1 (Rust)** | — | — | — | — | **1.09 ms** |
-| Laravel (PDO) | 341.52 ms | 0.27 ms | 0.48 ms | 0.35 ms | 342.61 ms |
-| Symfony (PDO) | 339.75 ms | 0.28 ms | 0.49 ms | 0.40 ms | 340.92 ms |
-
-**Winner: Lyger (313x)** — This is the most dramatic result. Lyger's Rust-native async database driver bypasses PDO entirely. The 313× advantage comes from:
-1. **No PDO overhead** — no PHP object hydration for each row
-2. **Async Tokio runtime** — non-blocking I/O via `tokio-postgres`/`mysql_async`
-3. **Zero-Copy** — results stay in Rust memory, never serialized to PHP heap
-
----
-
 ### Test 5: String Operations (1M operations)
 
 | Framework | Time |
