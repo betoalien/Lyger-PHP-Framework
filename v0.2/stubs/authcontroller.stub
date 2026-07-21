@@ -1,0 +1,296 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Lyger\Http\Request;
+use Lyger\Http\Response;
+use Lyger\Validation\Validator;
+use App\Models\User;
+
+class AuthController
+{
+    private array $users = [];
+
+    public function __construct()
+    {
+        // Demo users - in production use database
+        $this->users = [
+            'admin@lyger.com' => [
+                'id' => 1,
+                'name' => 'Admin User',
+                'email' => 'admin@lyger.com',
+                'password' => password_hash('password', PASSWORD_DEFAULT),
+                'role' => 'admin',
+                'created_at' => date('Y-m-d H:i:s'),
+            ],
+        ];
+    }
+
+    public function showLogin(): Response
+    {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lyger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div id="error" class="hidden text-red-500 text-sm"></div>
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600">Login</button>
+        </form>
+        <p class="mt-4 text-center text-sm text-gray-600">
+            <a href="/register" class="text-blue-500 hover:underline">Create account</a>
+        </p>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.success) {
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                window.location.href = '/dashboard';
+            } else {
+                document.getElementById('error').textContent = result.message;
+                document.getElementById('error').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+HTML;
+        return Response::html($html);
+    }
+
+    public function showRegister(): Response
+    {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Lyger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Create Account</h1>
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Name</label>
+                <input type="text" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name="password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <input type="password" name="password_confirmation" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+            </div>
+            <div id="error" class="hidden text-red-500 text-sm"></div>
+            <button type="submit" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600">Register</button>
+        </form>
+        <p class="mt-4 text-center text-sm text-gray-600">
+            <a href="/login" class="text-blue-500 hover:underline">Already have an account</a>
+        </p>
+    </div>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.success) {
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+                window.location.href = '/dashboard';
+            } else {
+                document.getElementById('error').textContent = result.message;
+                document.getElementById('error').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+HTML;
+        return Response::html($html);
+    }
+
+    public function login(Request $request): Response
+    {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Invalid data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $email = $data['email'];
+        $password = $data['password'];
+
+        if (!isset($this->users[$email])) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        $userData = $this->users[$email];
+
+        if (!password_verify($password, $userData['password'])) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        $token = base64_encode(json_encode([
+            'user_id' => $userData['id'],
+            'email' => $userData['email'],
+            'role' => $userData['role'],
+            'exp' => time() + 3600,
+        ]));
+
+        unset($userData['password']);
+
+        return Response::json([
+            'success' => true,
+            'message' => 'Welcome ' . $userData['name'],
+            'token' => $token,
+            'user' => $userData,
+        ]);
+    }
+
+    public function register(Request $request): Response
+    {
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+            'password_confirmation' => 'required|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Invalid data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        if (isset($this->users[$data['email']])) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Email already registered',
+            ], 422);
+        }
+
+        $id = count($this->users) + 1;
+        $userData = [
+            'id' => $id,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => password_hash($data['password'], PASSWORD_DEFAULT),
+            'role' => 'user',
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $this->users[$data['email']] = $userData;
+
+        $token = base64_encode(json_encode([
+            'user_id' => $id,
+            'email' => $userData['email'],
+            'role' => 'user',
+            'exp' => time() + 3600,
+        ]));
+
+        unset($userData['password']);
+
+        return Response::json([
+            'success' => true,
+            'message' => 'Account created successfully',
+            'token' => $token,
+            'user' => $userData,
+        ]);
+    }
+
+    public function logout(): Response
+    {
+        return Response::json([
+            'success' => true,
+            'message' => 'Logged out successfully',
+        ]);
+    }
+
+    public function me(Request $request): Response
+    {
+        $authHeader = $request->header('Authorization');
+
+        if (!$authHeader) {
+            return Response::json(['success' => false], 401);
+        }
+
+        $token = str_replace('Bearer ', '', $authHeader);
+        $decoded = json_decode(base64_decode($token), true);
+
+        if (!$decoded || $decoded['exp'] < time()) {
+            return Response::json(['success' => false], 401);
+        }
+
+        foreach ($this->users as $email => $user) {
+            if ($email === $decoded['email']) {
+                unset($user['password']);
+                return Response::json([
+                    'success' => true,
+                    'user' => $user,
+                ]);
+            }
+        }
+
+        return Response::json(['success' => false], 401);
+    }
+}
