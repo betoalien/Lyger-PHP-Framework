@@ -4,6 +4,8 @@ All notable changes to the validated v0.2 release line are documented here.
 
 ## [0.2.0] - 2026-07-21
 
+The v0.2 release replaces the previous root implementation; users install Lyger directly from the repository root. v0.1 remains the historical baseline in Git history, not a subdirectory.
+
 Rust production checklist and the v0.3 PardoX/Big Data roadmap: `../Changes/RUST_CORE_PRODUCTION_AND_COMPETITIVE_ROADMAP.md`.
 
 ### Added
