@@ -20,6 +20,10 @@ A PHP 8.3+ framework with a Rust FFI backend, an explicit PHP fallback, and repr
 
 Lyger is designed for teams that want a persistent PHP worker with a native Rust boundary for HTTP and database I/O, while retaining familiar PHP routing, validation and ORM patterns. v0.2 makes that architecture measurable through ABI, database, HTTP, memory and streaming contracts.
 
+## v0.3 roadmap: PardoX analytics
+
+The next major line will investigate an official Lyger–PardoX integration for large-scale analytics through PHP. The integration is planned, not shipped in v0.2; its implementation will require a stable binding contract, bounded data exchange and reproducible benchmarks.
+
 ## What is Lyger?
 
 Lyger is a next-generation PHP framework that fundamentally changes how PHP handles web requests. Instead of the traditional PHP-FPM model — where PHP boots from scratch on every request — Lyger keeps its worker **always alive in memory**, delegating raw HTTP handling to a Rust-powered **Axum** server via a zero-copy FFI bridge.

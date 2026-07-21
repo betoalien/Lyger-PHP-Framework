@@ -16,7 +16,7 @@ Always-Alive workers. Zero-Copy data. Zero-Bloat installation.
 
 <br/>
 
-[📖 Documentation](https://betoalien.github.io/Lyger-PHP-Framework/) &nbsp;·&nbsp;
+[📖 Documentation](https://lygerphp.com/) &nbsp;·&nbsp;
 [🚀 Quick Start](#quick-start) &nbsp;·&nbsp;
 [📊 Benchmarks](#performance) &nbsp;·&nbsp;
 [🎯 Demo](https://github.com/betoalien/Lyger-PHP-v0.1-Dental-Clinic-Demo)
@@ -66,6 +66,10 @@ Lyger keeps PHP **always alive in memory** and routes requests through a native 
 \* The JSON Rust value is currently a calculated estimate in the legacy benchmark and is not a direct Rust timing. PostgreSQL/MySQL CRUD validation is covered by the Rust-core integration suite; equivalent PHP-driver benchmarks are not yet public claims.
 
 Benchmark methodology and reproduction steps: [docs/validation-results.md](docs/validation-results.md) and [benchmark/run.php](benchmark/run.php).
+
+## Roadmap: v0.3 and PardoX
+
+v0.3 will investigate an official Lyger–PardoX integration for large-scale data analytics exposed through PHP. This is a roadmap commitment, not a v0.2 feature: the future contract must define stable Rust/PHP/PardoX bindings, bounded data exchange and reproducible analytical benchmarks. See [the v0.3 roadmap](Changes/RUST_CORE_PRODUCTION_AND_COMPETITIVE_ROADMAP.md).
 
 ## Quick Start
 
@@ -186,7 +190,7 @@ php rawr migrate:status              # Show migration status
 
 | | |
 |---|---|
-| 📖 **GitHub Pages** | [betoalien.github.io/Lyger-PHP-Framework](https://betoalien.github.io/Lyger-PHP-Framework/) |
+| 📖 **Documentation** | [lygerphp.com](https://lygerphp.com/) |
 | 🌐 **Mintlify Docs** | [betoalien-lyger-php-framework.mintlify.app/introduction](https://betoalien-lyger-php-framework.mintlify.app/introduction) |
 
 ---
