@@ -1,6 +1,6 @@
 # Migration from v0.1 to v0.2
 
-`v0.1` is frozen. Use `v0.2` for new work and keep the old directory only for compatibility and historical benchmark comparison.
+`v0.1` is frozen in Git history. The repository root is now v0.2; use the root for new work and consult the historical v0.1 tag/commit only for compatibility and benchmark comparison.
 
 ## Required changes
 
