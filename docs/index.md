@@ -1,18 +1,24 @@
 ---
 layout: default
-title: Home
+title: v0.2 Home
 nav_order: 1
 description: "Lyger — A high-performance PHP framework powered by Rust FFI."
 permalink: /
 ---
 
-# Lyger Framework
+# Lyger Framework v0.2
 
-A high-performance PHP 8.0+ framework powered by Rust FFI. Always-Alive. Zero-Copy. Zero-Bloat.
+A PHP 8.3+ framework with a Rust FFI backend, an explicit PHP fallback, and reproducible validation notes.
+
+> v0.1 is frozen. v0.2 is the validated release line; its Rust queue transport, database contracts and bounded result streaming have reproducible acceptance tests.
 
 **[Get Started →](getting-started.html)** &nbsp;&nbsp; [View on GitHub](https://github.com/betoalien/Lyger-PHP-Framework)
 
 ---
+
+## Why Lyger?
+
+Lyger is designed for teams that want a persistent PHP worker with a native Rust boundary for HTTP and database I/O, while retaining familiar PHP routing, validation and ORM patterns. v0.2 makes that architecture measurable through ABI, database, HTTP, memory and streaming contracts.
 
 ## What is Lyger?
 
@@ -26,8 +32,9 @@ The result is PHP with the speed of a compiled language.
 
 | Principle | Description |
 |-----------|-------------|
-| **Always-Alive** | PHP worker stays loaded in memory across all requests — no boot overhead |
-| **Zero-Copy FFI** | Data stays in Rust memory. PHP holds opaque pointer IDs, never copies raw bytes |
+| **Always-Alive** | Rust keeps the HTTP transport alive while PHP handles requests on its main thread |
+| **Bounded streaming** | Large result sets are consumed in ordered chunks with an explicit memory budget |
+| **Zero-Copy FFI** | Data stays in Rust-owned result handles until the final JSON ABI boundary |
 | **Zero-Bloat** | An interactive installer physically removes unused code after project setup |
 | **Familiar DX** | Eloquent-style ORM, Route facades, Eloquent-style validation — Laravel patterns, Rust performance |
 
@@ -37,18 +44,18 @@ The result is PHP with the speed of a compiled language.
 
 | Operation | Lyger | Laravel | Symfony |
 |-----------|-------|---------|---------|
-| Database CRUD (1000 ops) | **1.09 ms** | 342.61 ms | 340.92 ms |
-| JSON Serialization (1000 objects) | **6.62 ms** | 17.24 ms | 17.67 ms |
-| Heavy Computation (10M iterations) | **112 ms** | 360 ms | 357 ms |
-| Memory per request | ~16 MB | ~32 MB | ~28 MB |
+| SQLite FFI query + JSON (single call) | **1.68 ms** | — | — |
+| Heavy computation (10M iterations) | **73 ms** | 368 ms | — |
+| JSON serialization | estimated only* | — | — |
+| Memory sample | 16 MB used / 18 MB peak | — | — |
 
-> Full benchmark methodology and results: [Performance](performance.html)
+\* The current JSON Rust value is calculated by the legacy benchmark and is not a direct Rust timing. Full methodology and results: [Performance](performance.html).
 
 ---
 
 ## Requirements
 
-- PHP 8.0 or higher
+- PHP 8.3 or higher
 - PHP `ffi` extension enabled (`ffi.enable = 1`)
 - Composer
 - Rust toolchain (for compiling the FFI library)

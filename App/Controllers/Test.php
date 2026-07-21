@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace {{namespace }};
+namespace App\Controllers;
 
 use Lyger\Http\Request;
 use Lyger\Http\Response;
 
-class {{className }}
+class Test
 {
     public function index(): Response
     {
-        return Response::json(['message' => '{{className }} controller']);
+        return Response::json(['message' => 'Test controller']);
     }
 }

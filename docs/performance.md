@@ -4,13 +4,13 @@ title: Performance & Benchmarks
 nav_order: 21
 ---
 
-# Performance & Benchmarks
+# Performance & Benchmarks (v0.2)
 
 ---
 
 ## Executive Summary
 
-Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster performance** than Laravel and Symfony across all measured operation types. This is not a micro-benchmark trick — it reflects fundamental architectural differences in how PHP frameworks handle requests and data.
+This page reports only measurements currently executed in the repository. It does not claim end-to-end HTTP throughput or comparative Laravel/Symfony advantages until equivalent harnesses and raw outputs are committed.
 
 ---
 
@@ -18,11 +18,11 @@ Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster perfo
 
 | Parameter | Value |
 |-----------|-------|
-| **Date** | March 8, 2026 |
+| **Date** | July 21, 2026 |
 | **OS** | macOS Darwin 25.3.0 |
 | **PHP Version** | 8.3 |
 | **Rust Version** | 1.75+ |
-| **Lyger Version** | v0.1 |
+| **Lyger Version** | v0.2 |
 | **Laravel Version** | 12.x |
 | **Symfony Version** | 7.4 |
 
@@ -34,11 +34,11 @@ Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster perfo
 
 | Framework | Total Time | Throughput |
 |-----------|------------|------------|
-| **Lyger v0.1** | 0.01 ms | **139,810,133 req/s** |
+| **Lyger (in-process loop)** | 0.01 ms | Not HTTP throughput |
 | Laravel | 0.01 ms | 123,361,882 req/s |
 | Symfony | 0.01 ms | 110,376,421 req/s |
 
-**Winner: Lyger** — highest throughput even at minimal workload, reflecting lower per-request overhead.
+This is an in-process loop, not a server benchmark; no framework winner is claimed.
 
 ---
 
@@ -63,6 +63,21 @@ Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster perfo
 | Symfony | 17.67 ms | N/A | baseline |
 
 **Winner: Lyger (3.0x)** — `serde_json` uses hardware SIMD instructions for JSON encoding/decoding, cutting serialization time by 67%. In API-heavy applications returning large payloads, this compounds across every request.
+
+---
+
+### Test 4: Database CRUD (1,000 operations)
+
+| Framework | Insert | Select | Update | Delete | **Total** |
+|-----------|--------|--------|--------|--------|-----------|
+| **Lyger v0.1 (Rust)** | — | — | — | — | **1.09 ms** |
+| Laravel (PDO) | 341.52 ms | 0.27 ms | 0.48 ms | 0.35 ms | 342.61 ms |
+| Symfony (PDO) | 339.75 ms | 0.28 ms | 0.49 ms | 0.40 ms | 340.92 ms |
+
+Historical note: this comparison is not publishable as a v0.2 benchmark because the harnesses, schema and raw outputs are not equivalent. The 313× figure is retired and must not be used as a v0.2 claim. The intended architectural benefits are:
+1. **No PDO overhead** — no PHP object hydration for each row
+2. **Async Tokio runtime** — non-blocking I/O via `tokio-postgres`/`mysql_async`
+3. **Zero-Copy** — results stay in Rust memory, never serialized to PHP heap
 
 ---
 
@@ -96,8 +111,8 @@ Lyger's Always-Alive + Zero-Copy architecture delivers **3x to 313x faster perfo
 |--------|------------|---------|---------|-----------------|
 | **Heavy Computation** | 112 ms | 360 ms | 357 ms | **3.2x faster** |
 | **JSON Serialization** | 6.62 ms | 17.24 ms | 17.67 ms | **3.0x faster** |
-| **Database CRUD** | 1.09 ms | 342.61 ms | 340.92 ms | **313x faster** |
-| **Hello World throughput** | 139M req/s | 123M req/s | 110M req/s | **1.1x faster** |
+| **Database CRUD** | Historical, not comparable | 342.61 ms | 340.92 ms | — |
+| **Hello World throughput** | Not measured as HTTP | Not comparable | Not comparable | — |
 
 ---
 
