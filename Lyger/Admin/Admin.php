@@ -442,10 +442,10 @@ class AdminTheme
                 const actionTd = document.createElement('td');
                 actionTd.className = 'px-6 py-4 whitespace-nowrap text-right';
                 actionTd.innerHTML = `
-                    <button onclick="editRow(${row.id})" class="text-blue-500 hover:text-blue-700 mr-3">
+                    <button onclick="editRow(\${row.id})" class="text-blue-500 hover:text-blue-700 mr-3">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="deleteRow(${row.id})" class="text-red-500 hover:text-red-700">
+                    <button onclick="deleteRow(\${row.id})" class="text-red-500 hover:text-red-700">
                         <i class="fas fa-trash"></i>
                     </button>
                 `;

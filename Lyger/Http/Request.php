@@ -31,6 +31,36 @@ final class Request
         return new self();
     }
 
+    /** Build a request from the Rust queue payload without touching superglobals. */
+    public static function fromServerPayload(array $payload): self
+    {
+        $request = new self();
+        $request->server = [
+            'REQUEST_METHOD' => strtoupper((string) ($payload['method'] ?? 'GET')),
+            'REQUEST_URI' => (string) ($payload['uri'] ?? '/'),
+            'REMOTE_ADDR' => (string) ($payload['client_ip'] ?? '127.0.0.1'),
+        ];
+        foreach (($payload['headers'] ?? []) as $name => $value) {
+            $request->server['HTTP_' . str_replace('-', '_', strtoupper((string) $name))] = (string) $value;
+        }
+        $body = (string) ($payload['body'] ?? '');
+        $contentType = strtolower((string) ($request->header('Content-Type') ?? ''));
+        if ($body !== '' && str_contains($contentType, 'application/json')) {
+            $decoded = json_decode($body, true);
+            $request->json = is_array($decoded) ? $decoded : [];
+            $request->body = $request->json;
+        } elseif ($body !== '') {
+            parse_str($body, $request->post);
+            $request->body = $request->post;
+        }
+        return $request;
+    }
+
+    public function rawBody(): ?array
+    {
+        return $this->body;
+    }
+
     public function get(string $key, $default = null)
     {
         return $this->get[$key] ?? $default;

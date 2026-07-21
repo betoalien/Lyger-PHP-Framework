@@ -1,6 +1,6 @@
 {
-    "name": "betoalien/lyger",
-    "description": "Lyger Framework v0.1 - PHP on steroids with Rust FFI",
+    "name": "betoalien/lyger-v0.2",
+    "description": "Lyger Framework v0.2 - PHP with the production Rust FFI bridge",
     "keywords": ["framework", "lyger", "rust", "ffi", "performance", "zero-copy", "async"],
     "type": "project",
     "license": "MIT",
@@ -12,14 +12,19 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "ext-ffi": "*"
     },
     "autoload": {
         "psr-4": {
-            "Lyger\\": "Lyger/",
             "App\\": "App/"
-        }
+        },
+        "classmap": [
+            "Lyger/"
+        ],
+        "exclude-from-classmap": [
+            "Lyger/Database/HasOne.php"
+        ]
     },
     "scripts": {
         "post-create-project-cmd": [

@@ -16,7 +16,7 @@ Lyger's performance backbone is a Rust library compiled as a native shared libra
 
 ## Requirements
 
-- PHP 8.0+ with `ffi` extension (`ffi.enable = 1`)
+- PHP 8.3+ with `ffi` extension (`ffi.enable = 1`)
 - Pre-compiled Rust library in `libraries/` directory
 - OR Rust toolchain to build from source
 
@@ -29,17 +29,17 @@ cd lyger_framework_rust-/
 cargo build --release
 ```
 
-Copy the compiled output to `v0.1/libraries/`:
+Copy the generated artifact to the matching `v0.2/libraries/libs/` platform directory:
 
 ```bash
 # macOS (ARM64)
-cp target/release/liblyger.dylib ../v0.1/libraries/lyger_Darwin_arm64.dylib
+cp target/release/liblyger.dylib ../v0.2/libraries/libs/Mac/lyger-MacOS-ARM64.dylib
 
 # macOS (Intel)
-cp target/release/liblyger.dylib ../v0.1/libraries/lyger_Darwin_x86_64.dylib
+cp target/release/liblyger.dylib ../v0.2/libraries/libs/Mac/lyger-MacOS-Intel.dylib
 
 # Linux
-cp target/release/liblyger.so ../v0.1/libraries/lyger_Linux_x86_64.so
+cp target/release/liblyger.so ../v0.2/libraries/libs/Linux/lyger-Linux-x64.so
 ```
 
 Cargo.toml is configured for maximum performance:

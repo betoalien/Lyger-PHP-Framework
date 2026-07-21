@@ -13,24 +13,32 @@ use Lyger\Foundation\Path;
 class QueryBuilder
 {
     private ?\PDO $connection = null;
+    private ?DatabaseDriver $driver = null;
     private string $table;
     private array $columns = ['*'];
     private array $wheres = [];
-    private array $bindings = [];
+    private array $whereBindings = [];
     private ?array $orderBy = null;
     private ?int $limit = null;
     private ?int $offset = null;
     private array $joins = [];
     private array $updates = [];
 
-    public function __construct(string $table)
+    public function __construct(string $table, ?DatabaseDriver $driver = null)
     {
         $this->table = $table;
+        $this->driver = $driver ?? DatabaseManager::make();
     }
 
     public static function table(string $table): self
     {
         return new self($table);
+    }
+
+    public function using(DatabaseDriver $driver): self
+    {
+        $this->driver = $driver;
+        return $this;
     }
 
     public function select(array $columns): self
@@ -53,7 +61,7 @@ class QueryBuilder
             'type' => 'basic',
         ];
 
-        $this->bindings[] = $value;
+        $this->whereBindings[] = $value;
         return $this;
     }
 
@@ -71,7 +79,7 @@ class QueryBuilder
             'type' => 'or',
         ];
 
-        $this->bindings[] = $value;
+        $this->whereBindings[] = $value;
         return $this;
     }
 
@@ -83,7 +91,7 @@ class QueryBuilder
             'type' => 'in',
         ];
 
-        $this->bindings = array_merge($this->bindings, $values);
+        $this->whereBindings = array_merge($this->whereBindings, $values);
         return $this;
     }
 
@@ -180,8 +188,11 @@ class QueryBuilder
     public function get(): array
     {
         $sql = $this->buildSelect();
+        if ($this->driver !== null) {
+            return $this->driver->query($sql, $this->whereBindings)['rows'] ?? [];
+        }
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute($this->bindings);
+        $stmt->execute($this->whereBindings);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -203,8 +214,12 @@ class QueryBuilder
         $sql = "SELECT COUNT(*) as count FROM {$this->table}";
         $sql .= $this->buildWheres();
 
+        if ($this->driver !== null) {
+            $rows = $this->driver->query($sql, $this->whereBindings)['rows'] ?? [];
+            return (int) ($rows[0]['count'] ?? 0);
+        }
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute($this->bindings);
+        $stmt->execute($this->whereBindings);
         return (int) $stmt->fetch(\PDO::FETCH_ASSOC)['count'];
     }
 
@@ -220,8 +235,23 @@ class QueryBuilder
 
         $sql = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
 
+        if ($this->driver !== null) {
+            return (int) ($this->driver->query($sql, array_values($data))['affected_rows'] ?? 0) > 0;
+        }
         $stmt = $this->getConnection()->prepare($sql);
         return $stmt->execute(array_values($data));
+    }
+
+    public function insertGetId(array $data): int|string
+    {
+        if ($this->driver !== null) {
+            $columns = implode(', ', array_keys($data));
+            $placeholders = implode(', ', array_fill(0, count($data), '?'));
+            $result = $this->driver->query("INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})", array_values($data));
+            return $result['last_insert_id'] ?? '';
+        }
+        $this->insert($data);
+        return $this->getConnection()->lastInsertId();
     }
 
     public function update(array $data): int
@@ -229,7 +259,6 @@ class QueryBuilder
         $sets = [];
         foreach (array_keys($data) as $key) {
             $sets[] = "{$key} = ?";
-            $this->bindings[] = $data[$key];
         }
 
         $sql = "UPDATE {$this->table} SET " . implode(', ', $sets);
@@ -239,8 +268,11 @@ class QueryBuilder
             $sql .= " LIMIT {$this->limit}";
         }
 
+        if ($this->driver !== null) {
+            return (int) ($this->driver->query($sql, array_merge(array_values($data), $this->whereBindings))['affected_rows'] ?? 0);
+        }
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute($this->bindings);
+        $stmt->execute(array_merge(array_values($data), $this->whereBindings));
         return $stmt->rowCount();
     }
 
@@ -253,8 +285,11 @@ class QueryBuilder
             $sql .= " LIMIT {$this->limit}";
         }
 
+        if ($this->driver !== null) {
+            return (int) ($this->driver->query($sql, $this->whereBindings)['affected_rows'] ?? 0);
+        }
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->execute($this->bindings);
+        $stmt->execute($this->whereBindings);
         return $stmt->rowCount();
     }
 
@@ -330,5 +365,10 @@ class QueryBuilder
         }
 
         return $this->connection;
+    }
+
+    private function activeDriver(): DatabaseDriver
+    {
+        return $this->driver ??= DatabaseManager::make();
     }
 }
