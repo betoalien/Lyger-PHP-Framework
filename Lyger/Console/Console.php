@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lyger\Console;
 
-use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -56,7 +56,7 @@ class Kernel
 /**
  * Base Command - Foundation for CLI commands
  */
-abstract class Command extends \Symfony\Component\Console\Command\Command
+abstract class Command extends SymfonyCommand
 {
     protected function configure(): void
     {
@@ -83,7 +83,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
 
     protected function error(string $message): void
     {
-        $this->output->writeln("<error>{$error}</error>");
+        $this->output->writeln("<error>{$message}</error>");
     }
 
     protected function line(string $message): void

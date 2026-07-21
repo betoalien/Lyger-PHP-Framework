@@ -9,7 +9,7 @@ $phpIni = $basePath . '/php.ini';
 $isInstalled = isProjectInstalled($basePath);
 
 if ($argc < 2) {
-    echo "Lyger Framework CLI v0.1\n";
+    echo "Lyger Framework CLI v0.2\n";
     echo "Usage: php rawr <command> [arguments]\n\n";
     echo "Commands:\n";
     if (!$isInstalled) {
@@ -57,7 +57,13 @@ switch ($command) {
         installProject($basePath);
         break;
     case 'serve':
-        serveLegacy($basePath, $phpIni, $port);
+        $validatedPort = filter_var($port, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
+        if ($validatedPort === false) {
+            fwrite(STDERR, "Error: --port must be an integer between 1 and 65535\n");
+            exit(1);
+        }
+        putenv("LYGER_PORT={$validatedPort}");
+        serveAlwaysAlive($basePath, $phpIni);
         break;
     case 'serve:php':
         serveLegacy($basePath, $phpIni, $port);
@@ -86,6 +92,9 @@ switch ($command) {
     case 'migrate:status':
         migrateStatus($basePath);
         break;
+    case 'core:download-binaries':
+        verifyCoreBinaries($basePath);
+        break;
     default:
         echo "Unknown command: {$command}\n";
         break;
@@ -99,7 +108,7 @@ function serveAlwaysAlive(string $basePath, string $phpIni): void
 {
     echo "\n";
     echo "========================================\n";
-    echo "   LYGER SERVER v0.1\n";
+    echo "   LYGER SERVER v0.2\n";
     echo "   Always-Alive Mode\n";
     echo "========================================\n\n";
 
@@ -123,12 +132,12 @@ function serveAlwaysAlive(string $basePath, string $phpIni): void
         }
         if ($uri === '/api/info') {
             return json_encode([
-                'framework' => 'Lyger v0.1',
+                'framework' => 'Lyger v0.2',
                 'mode' => 'always-alive',
                 'php_version' => PHP_VERSION,
             ]);
         }
-        return json_encode(['error' => 'Not Found', 'uri' => $uri]);
+        return \Lyger\Http\Response::json(['error' => 'Not Found', 'uri' => $uri], 404);
     };
 
     \Lyger\Core\ServerManager::start($router);
@@ -507,7 +516,7 @@ function installProject(string $basePath): void
 {
     echo "\n";
     echo "╔═══════════════════════════════════════════════════════════════╗\n";
-    echo "║          LYGER v0.1 - ZERO-BLOAT INSTALLER                  ║\n";
+    echo "║          LYGER v0.2 - ZERO-BLOAT INSTALLER                  ║\n";
     echo "║          Configure Your Stack, Remove the Rest              ║\n";
     echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
 
@@ -1028,4 +1037,20 @@ function getProjectConfig(string $basePath): array
 function isProjectInstalled(string $basePath): bool
 {
     return file_exists($basePath . '/.lyger_installed');
+}
+
+function verifyCoreBinaries(string $basePath): void
+{
+    $os = PHP_OS;
+    $arch = PHP_OS === 'Darwin' ? trim((string) shell_exec('uname -m')) : 'x64';
+    $path = match ($os) {
+        'Darwin' => $basePath . '/libraries/libs/Mac/' . ($arch === 'arm64' ? 'lyger-MacOS-ARM64.dylib' : 'lyger-MacOS-Intel.dylib'),
+        'WINNT' => $basePath . '/libraries/libs/Win/lyger-Windows-x64.dll',
+        default => $basePath . '/libraries/libs/Linux/lyger-Linux-x64.so',
+    };
+    if (!is_file($path) || !is_readable($path)) {
+        fwrite(STDERR, "Core binary missing for {$os}/{$arch}: {$path}\n");
+        exit(1);
+    }
+    echo "Core binary ready: " . basename($path) . "\n";
 }

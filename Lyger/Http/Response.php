@@ -91,6 +91,11 @@ final class Response
         return $this->headers[$key] ?? $default;
     }
 
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
     public function getContent(): string
     {
         return $this->content;

@@ -12,7 +12,7 @@ nav_order: 2
 
 Before installing Lyger, make sure your system meets the following requirements:
 
-- **PHP 8.0+** with the `ffi` extension enabled
+- **PHP 8.3+** with the `ffi` extension enabled
 - **Composer** (PHP dependency manager)
 - **Rust toolchain** (`rustup`, `cargo`) — only needed if you want to recompile the FFI library
 - **SQLite** (bundled with PHP, recommended for development)

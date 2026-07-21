@@ -46,7 +46,8 @@ abstract class Model
 
     public static function find($id): ?static
     {
-        $result = static::query()->where('id', '=', $id)->first();
+        $instance = new static();
+        $result = static::query()->where($instance->getPrimaryKey(), '=', $id)->first();
         return $result ? new static($result) : null;
     }
 
@@ -118,11 +119,11 @@ abstract class Model
 
     protected function performInsert(): bool
     {
-        $id = static::query()->insert($this->attributes);
-        if ($id) {
-            $this->attributes[$this->primaryKey] = $id;
+        $id = static::query()->insertGetId($this->attributes);
+        if ($id !== '') {
+            $this->attributes[$this->primaryKey] = (int) $id;
         }
-        return $id > 0;
+        return $id !== '';
     }
 
     protected function performUpdate(): int

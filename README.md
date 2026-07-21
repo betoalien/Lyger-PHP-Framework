@@ -1,16 +1,18 @@
 <div align="center">
 
-# ⚡ Lyger Framework
+# ⚡ Lyger Framework v0.2
 
-**The PHP framework that never sleeps.**
+**Lyger, the leader in stars.**
 
-A high-performance PHP 8.0+ framework powered by a Rust FFI backend.
+v0.1 is frozen for historical compatibility. v0.2 is the validated release line for the Rust FFI bridge.
+
+A high-performance PHP 8.3+ framework powered by a Rust FFI backend.
 Always-Alive workers. Zero-Copy data. Zero-Bloat installation.
 
-[![PHP 8.0+](https://img.shields.io/badge/PHP-8.0%2B-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
+[![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat-square&logo=php&logoColor=white)](https://php.net)
 [![Rust](https://img.shields.io/badge/Powered%20by-Rust-CE422B?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.1-3b82f6?style=flat-square)]()
+[![Version](https://img.shields.io/badge/Version-0.2-3b82f6?style=flat-square)]()
 
 <br/>
 
@@ -21,7 +23,15 @@ Always-Alive workers. Zero-Copy data. Zero-Bloat installation.
 
 </div>
 
+See [`CHANGELOG.md`](CHANGELOG.md) for the ordered release history and [`docs/MIGRATION-v0.1-v0.2.md`](docs/MIGRATION-v0.1-v0.2.md) for upgrade notes.
+
 ---
+
+## Why Lyger?
+
+Lyger exists to make a persistent PHP application lifecycle measurable and controllable. Instead of repeatedly booting a conventional framework, Lyger keeps a PHP worker alive while Rust handles native HTTP I/O, database drivers and bounded result storage. This gives applications a clear Rust/PHP boundary without requiring invasive changes to an existing framework.
+
+The goal is not an unqualified performance promise: v0.2 reports reproducible contracts and local measurements, while separating estimates from direct benchmarks. See the [validation record](docs/validation-results.md).
 
 ## What makes Lyger different?
 
@@ -44,24 +54,24 @@ Lyger keeps PHP **always alive in memory** and routes requests through a native 
 
 ## Performance
 
-> Real benchmarks. Same hardware. Same workload.
+> Measurements must be reproducible. Results below are local microbenchmarks, not a universal performance guarantee.
 
 | Operation | Lyger | Laravel | Symfony | Advantage |
 |-----------|:-----:|:-------:|:-------:|:---------:|
-| Database CRUD (1 000 ops) | **1.09 ms** | 342.61 ms | 340.92 ms | **313×** |
-| JSON Serialization (1 000 obj) | **6.62 ms** | 17.24 ms | 17.67 ms | **3×** |
-| Heavy Computation (10M iter) | **112 ms** | 360 ms | 357 ms | **3.2×** |
-| Throughput (Hello World) | **139M req/s** | 123M req/s | 110M req/s | **+13%** |
+| SQLite FFI query + JSON (single call) | **1.68 ms** | — | — | measured locally |
+| Heavy Computation (10M iter) | **73 ms** | 368 ms | — | **5.1×** |
+| JSON Serialization (1 000 objects × 100) | **6.86 ms*** | 20.59 ms | — | **3×*** |
+| Hello World in-process loop (1 000 iterations) | **0.01 ms** | — | — | not HTTP throughput |
 
-The 313× database advantage comes from bypassing PDO entirely — Rust's `tokio-postgres` and `mysql_async` handle queries asynchronously, and results never leave Rust's heap until you need the final JSON.
+\* The JSON Rust value is currently a calculated estimate in the legacy benchmark and is not a direct Rust timing. PostgreSQL/MySQL CRUD validation is covered by the Rust-core integration suite; equivalent PHP-driver benchmarks are not yet public claims.
 
----
+Benchmark methodology and reproduction steps: [docs/validation-results.md](docs/validation-results.md) and [benchmark/run.php](benchmark/run.php).
 
 ## Quick Start
 
 ### Requirements
 
-- PHP 8.0+ with `ffi` extension
+- PHP 8.3+ with `ffi` extension
 - Composer
 
 ### Install

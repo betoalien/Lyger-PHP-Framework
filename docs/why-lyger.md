@@ -6,6 +6,8 @@ nav_order: 22
 
 # Why Lyger? — The Case for a New PHP Framework
 
+Lyger is an experiment in making PHP's application lifecycle explicit: keep the framework warm, move selected I/O and computation to Rust, and retain a documented PHP fallback. We are building a framework rather than only optimizing an existing one because this boundary, lifecycle, and ownership model need to be measurable end to end.
+
 ---
 
 ## The PHP Performance Problem
@@ -38,9 +40,9 @@ This isn't a framework problem. It's PHP's **stateless process model** — and n
 
 ---
 
-## The Lyger Solution
+## The Lyger Direction
 
-Lyger attacks the root cause instead of patching symptoms.
+Lyger targets the lifecycle and FFI boundary directly. In v0.2 these capabilities are split into measured, experimental, and planned work; no performance number below should be treated as a universal claim.
 
 ### 1. Always-Alive Worker
 
@@ -121,7 +123,7 @@ Any computation-heavy operation — report generation, data transformation, mach
 
 | Framework | Throughput |
 |-----------|------------|
-| **Lyger v0.1** | **139,810,133 req/s** |
+| **Lyger** | Not measured as HTTP throughput |
 | Laravel 12 | 123,361,882 req/s |
 | Symfony 7.4 | 110,376,421 req/s |
 

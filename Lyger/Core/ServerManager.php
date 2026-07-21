@@ -29,24 +29,40 @@ class ServerManager
 
         echo "\n";
         echo "========================================\n";
-        echo "   LYGER SERVER v0.1\n";
+        echo "   LYGER SERVER v0.2\n";
         echo "   Always-Alive Mode\n";
         echo "========================================\n\n";
         echo "✓ Framework loaded in memory\n";
         echo "✓ Waiting for requests...\n";
         echo "   Ctrl+C to stop\n\n";
 
-        // Keep PHP alive - waiting for FFI callbacks from Rust
-        while (self::$running) {
-            // In a real implementation, this would wait for Rust to invoke callbacks
-            // For now, we simulate with a simple sleep
-            sleep(1);
-
-            // Check if we should stop
-            if (!self::$running) {
-                break;
-            }
+        $engine = Engine::getInstance();
+        $queueStarted = $engine->startQueueServer((int) (getenv('LYGER_PORT') ?: 8000));
+        if (!$queueStarted) {
+            throw new \RuntimeException('Rust queue server could not start: ' . $engine->lastError());
         }
+
+        while (self::$running) {
+            $payload = $engine->nextRequest(100);
+            if ($payload === null) {
+                continue;
+            }
+            $requestId = (int) ($payload['request_id'] ?? 0);
+            try {
+                $request = \Lyger\Http\Request::fromServerPayload($payload);
+                $response = $router($request->uri(), $request->method(), $request->all());
+                if (is_string($response)) {
+                    $response = new \Lyger\Http\Response($response);
+                }
+                if (!$response instanceof \Lyger\Http\Response) {
+                    $response = \Lyger\Http\Response::json($response);
+                }
+            } catch (\Throwable $e) {
+                $response = \Lyger\Http\Response::error($e->getMessage(), 500);
+            }
+            $engine->sendResponse($requestId, $response);
+        }
+        $engine->stopServer();
     }
 
     /**
